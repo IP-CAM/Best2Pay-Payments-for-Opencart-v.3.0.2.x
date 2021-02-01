@@ -54,6 +54,7 @@ class ControllerExtensionPaymentBest2pay extends Controller {
     }
 
     public function request() {
+        error_reporting(0);
         try {
             $this->language->load('payment/best2pay');
             $this->load->model('checkout/order');
@@ -69,6 +70,7 @@ class ControllerExtensionPaymentBest2pay extends Controller {
             $this->model_checkout_order->addOrderHistory($this->request->get['reference'], 16, 'Best2Pay Fail'); // Voided
             $this->response->redirect($this->url->link('checkout/failure'));
         }
+        error_reporting(1);
     }
 
     private function registerOrder($order_info) {
@@ -247,7 +249,7 @@ class ControllerExtensionPaymentBest2pay extends Controller {
 
     private function orderWasPayed($response) {
         // looking for an order
-        $order_id = intval($response->reference);
+        $order_id = (isset($response->reference)) ? intval($response->reference) : 0;
         if ($order_id == 0)
             return false;
 
