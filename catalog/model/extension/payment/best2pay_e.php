@@ -8,7 +8,7 @@ class ModelExtensionPaymentBest2paye extends Model {
     		'code'       => 'best2pay_e',
     		'title'      => $this->language->get('text_title'),
     		'terms'      => '',
-			'sort_order' => $this->config->get('best2pay_e_sort_order')
+			'sort_order' => $this->config->get('payment_best2pay_e_sort_order')
   		);
     	return $method_data;
   	}

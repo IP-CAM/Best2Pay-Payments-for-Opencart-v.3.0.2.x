@@ -8,12 +8,12 @@ class ControllerExtensionPaymentBest2paye extends Controller {
 
         $redirect_url = $this->registerOrder($order_info);
         if ($redirect_url) {
-            return $this->load->view('extension/payment/best2pay_e.tpl', array(
+            return $this->load->view('extension/payment/best2pay_e', array(
                 'button_confirm' => $this->language->get('button_confirm'),
                 'action' => $redirect_url
             ));
         } else {
-            return $this->load->view('extension/payment/best2pay_e_error.tpl', array(
+            return $this->load->view('extension/payment/best2pay_e_error', array(
                 'error' => $this->language->get('text_error')
             ));
         }
@@ -78,7 +78,7 @@ class ControllerExtensionPaymentBest2paye extends Controller {
                 break;
         }
 
-        if (!$this->config->get('best2pay_e_test')) {
+        if (!$this->config->get('payment_best2pay_e_test')) {
             $best2pay_url = 'https://pay.best2pay.net';
         } else {
             $best2pay_url = 'https://test.best2pay.net';
@@ -89,13 +89,13 @@ class ControllerExtensionPaymentBest2paye extends Controller {
 
 
         $amount = $this->currency->format($order_info['total'], $order_info['currency_code'], $order_info['currency_value'], false);
-        $signature = base64_encode(md5($this->config->get('best2pay_e_sector') . intval($amount * 100) . $currency . $this->config->get('best2pay_e_password')));
+        $signature = base64_encode(md5($this->config->get('payment_best2pay_e_sector') . intval($amount * 100) . $currency . $this->config->get('payment_best2pay_e_password')));
 
         $fiscalPositions='';
-        $KKT = $this->config->get('best2pay_e_kkt');
+        $KKT = $this->config->get('payment_best2pay_e_kkt');
         if ($KKT==1){
-            $TAX = (strlen($this->config->get('best2pay_e_tax')) > 0) ?
-                intval($this->config->get('best2pay_e_tax')) : 7;
+            $TAX = (strlen($this->config->get('payment_best2pay_e_tax')) > 0) ?
+                intval($this->config->get('payment_best2pay_e_tax')) : 7;
             if ($TAX > 0 && $TAX < 7){
                 $products = $this->cart->getProducts();
                 foreach ($products as $product) {
@@ -111,7 +111,7 @@ class ControllerExtensionPaymentBest2paye extends Controller {
         }
 
         $query = http_build_query(array(
-            'sector' => $this->config->get('best2pay_e_sector'),
+            'sector' => $this->config->get('payment_best2pay_e_sector'),
             'reference' => $order_info['order_id'],
             'amount' => intval($amount * 100),
             'fiscal_positions' => $fiscalPositions,
@@ -157,8 +157,8 @@ class ControllerExtensionPaymentBest2paye extends Controller {
             error_log($b2p_order_id);
             return false;
         } else {
-            $signature = base64_encode(md5($this->config->get('best2pay_e_sector') . $b2p_order_id . $this->config->get('best2pay_e_password')));
-            return "{$best2pay_url}/webapi/Epayment?sector={$this->config->get('best2pay_e_sector')}&id={$b2p_order_id}&signature={$signature}";
+            $signature = base64_encode(md5($this->config->get('payment_best2pay_e_sector') . $b2p_order_id . $this->config->get('payment_best2pay_e_password')));
+            return "{$best2pay_url}/webapi/Epayment?sector={$this->config->get('payment_best2pay_e_sector')}&id={$b2p_order_id}&signature={$signature}";
         }
 
     }
@@ -182,16 +182,16 @@ class ControllerExtensionPaymentBest2paye extends Controller {
             return false;
 
         // check payment operation state
-        $signature = base64_encode(md5($this->config->get('best2pay_e_sector') . $b2p_order_id . $b2p_operation_id . $this->config->get('best2pay_e_password')));
+        $signature = base64_encode(md5($this->config->get('payment_best2pay_e_sector') . $b2p_order_id . $b2p_operation_id . $this->config->get('payment_best2pay_e_password')));
 
-        if (!$this->config->get('best2pay_e_test')) {
+        if (!$this->config->get('payment_best2pay_e_test')) {
             $best2pay_url = 'https://pay.best2pay.net';
         } else {
             $best2pay_url = 'https://test.best2pay.net';
         }
 
         $query = http_build_query(array(
-            'sector' => $this->config->get('best2pay_e_sector'),
+            'sector' => $this->config->get('payment_best2pay_e_sector'),
             'id' => $b2p_order_id,
             'operation' => $b2p_operation_id,
             'signature' => $signature
@@ -247,7 +247,7 @@ class ControllerExtensionPaymentBest2paye extends Controller {
         unset($tmp_response["signature"]);
         unset($tmp_response["protocol_message"]);
 
-        $signature = base64_encode(md5(implode('', $tmp_response) . $this->config->get('best2pay_e_password')));
+        $signature = base64_encode(md5(implode('', $tmp_response) . $this->config->get('payment_best2pay_e_password')));
         return $signature === $response->signature;
     }
 }

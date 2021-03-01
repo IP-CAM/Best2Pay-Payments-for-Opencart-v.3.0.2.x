@@ -8,19 +8,12 @@ class ControllerExtensionPaymentBest2pay extends Controller {
 
         $redirect_url = $this->registerOrder($order_info);
         if ($redirect_url) {
-            if (file_exists(DIR_TEMPLATE . $this->config->get('config_template') . 'extension/payment/best2pay.tpl')) {
-                return $this->load->view($this->config->get('config_template') . 'extension/payment/best2pay.tpl',  array(
-                    'button_confirm' => $this->language->get('button_confirm'),
-                    'action' => $redirect_url
-                ));
-            } else {
-                return $this->load->view('extension/payment/best2pay.tpl',  array(
-                    'button_confirm' => $this->language->get('button_confirm'),
-                    'action' => $redirect_url
-                ));
-            }
+			return $this->load->view('extension/payment/best2pay',  array(
+				'button_confirm' => $this->language->get('button_confirm'),
+				'action' => $redirect_url
+			));
         } else {
-            return $this->load->view('extension/payment/best2pay_error.tpl', array(
+            return $this->load->view('extension/payment/best2pay_error', array(
                 'error' => $this->language->get('text_error')
             ));
         }
@@ -88,7 +81,7 @@ class ControllerExtensionPaymentBest2pay extends Controller {
                 break;
         }
 
-        if (!$this->config->get('best2pay_test')) {
+        if (!$this->config->get('payment_best2pay_test')) {
             $best2pay_url = 'https://pay.best2pay.net';
         } else {
             $best2pay_url = 'https://test.best2pay.net';
@@ -97,13 +90,13 @@ class ControllerExtensionPaymentBest2pay extends Controller {
         $desc=$descOrderName.' '.$order_info['order_id'];
 
         $amount = $this->currency->format($order_info['total'], $order_info['currency_code'], $order_info['currency_value'], false);
-        $signature = base64_encode(md5($this->config->get('best2pay_sector') . intval($amount * 100) . $currency . $this->config->get('best2pay_password')));
+        $signature = base64_encode(md5($this->config->get('payment_best2pay_sector') . intval($amount * 100) . $currency . $this->config->get('payment_best2pay_password')));
 
         $fiscalPositions='';
-        $KKT = $this->config->get('best2pay_kkt');
+        $KKT = $this->config->get('payment_best2pay_kkt');
         if ($KKT==1){
-            $TAX = (strlen($this->config->get('best2pay_tax')) > 0) ?
-                intval($this->config->get('best2pay_tax')) : 7;
+            $TAX = (strlen($this->config->get('payment_best2pay_tax')) > 0) ?
+                intval($this->config->get('payment_best2pay_tax')) : 7;
             if ($TAX > 0 && $TAX < 7){
                 $products = $this->cart->getProducts();
                 foreach ($products as $product) {
@@ -118,14 +111,16 @@ class ControllerExtensionPaymentBest2pay extends Controller {
                     $fiscalPositions.='1;';
                     $fiscalPositions.=($this->session->data['shipping_method']['cost']*100).';';
                     $fiscalPositions.=$TAX.';';
-                    $fiscalPositions.='shipping'.'|';
+                    //$fiscalPositions.='shipping'.'|';
+                    //$fiscalPositions.='Доставка'.'|';
+                    $fiscalPositions.=$this->session->data['shipping_method']['title'].'|';
                 }
                 $fiscalPositions = substr($fiscalPositions, 0, -1);
             }
         }
-
+		
         $query = http_build_query(array(
-            'sector' => $this->config->get('best2pay_sector'),
+            'sector' => $this->config->get('payment_best2pay_sector'),
             'reference' => $order_info['order_id'],
             'fiscal_positions' => $fiscalPositions,
             'amount' => intval($amount * 100),
@@ -172,8 +167,8 @@ class ControllerExtensionPaymentBest2pay extends Controller {
             error_log($b2p_order_id);
             return false;
         } else {
-            $signature = base64_encode(md5($this->config->get('best2pay_sector') . $b2p_order_id . $this->config->get('best2pay_password')));
-            return "{$best2pay_url}/webapi/Purchase?sector={$this->config->get('best2pay_sector')}&id={$b2p_order_id}&signature={$signature}";
+            $signature = base64_encode(md5($this->config->get('payment_best2pay_sector') . $b2p_order_id . $this->config->get('payment_best2pay_password')));
+            return "{$best2pay_url}/webapi/Purchase?sector={$this->config->get('payment_best2pay_sector')}&id={$b2p_order_id}&signature={$signature}";
         }
 
     }
@@ -197,16 +192,16 @@ class ControllerExtensionPaymentBest2pay extends Controller {
             return false;
 
         // check payment operation state
-        $signature = base64_encode(md5($this->config->get('best2pay_sector') . $b2p_order_id . $b2p_operation_id . $this->config->get('best2pay_password')));
+        $signature = base64_encode(md5($this->config->get('payment_best2pay_sector') . $b2p_order_id . $b2p_operation_id . $this->config->get('payment_best2pay_password')));
 
-        if (!$this->config->get('best2pay_test')) {
+        if (!$this->config->get('payment_best2pay_test')) {
             $best2pay_url = 'https://pay.best2pay.net';
         } else {
             $best2pay_url = 'https://test.best2pay.net';
         }
 
         $query = http_build_query(array(
-            'sector' => $this->config->get('best2pay_sector'),
+            'sector' => $this->config->get('payment_best2pay_sector'),
             'id' => $b2p_order_id,
             'operation' => $b2p_operation_id,
             'signature' => $signature
@@ -262,7 +257,7 @@ class ControllerExtensionPaymentBest2pay extends Controller {
         unset($tmp_response["signature"]);
         unset($tmp_response["protocol_message"]);
 
-        $signature = base64_encode(md5(implode('', $tmp_response) . $this->config->get('best2pay_password')));
+        $signature = base64_encode(md5(implode('', $tmp_response) . $this->config->get('payment_best2pay_password')));
         return $signature === $response->signature;
     }
 }
