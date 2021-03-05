@@ -1,6 +1,6 @@
 <?php
 class ControllerExtensionPaymentBest2pay extends Controller {
-	public function index() {
+    public function index() {
         $this->load->language('payment/best2pay');
         $this->load->model('checkout/order');
 
@@ -8,16 +8,16 @@ class ControllerExtensionPaymentBest2pay extends Controller {
 
         $redirect_url = $this->registerOrder($order_info);
         if ($redirect_url) {
-			return $this->load->view('extension/payment/best2pay',  array(
-				'button_confirm' => $this->language->get('button_confirm'),
-				'action' => $redirect_url
-			));
+            return $this->load->view('extension/payment/best2pay',  array(
+                'button_confirm' => $this->language->get('button_confirm'),
+                'action' => $redirect_url
+            ));
         } else {
             return $this->load->view('extension/payment/best2pay_error', array(
                 'error' => $this->language->get('text_error')
             ));
         }
-	}
+    }
 
     public function callback() {
         try {
@@ -93,6 +93,7 @@ class ControllerExtensionPaymentBest2pay extends Controller {
         $signature = base64_encode(md5($this->config->get('payment_best2pay_sector') . intval($amount * 100) . $currency . $this->config->get('payment_best2pay_password')));
 
         $fiscalPositions='';
+        $fiscalAmount = 0;
         $KKT = $this->config->get('payment_best2pay_kkt');
         if ($KKT==1){
             $TAX = (strlen($this->config->get('payment_best2pay_tax')) > 0) ?
@@ -105,24 +106,32 @@ class ControllerExtensionPaymentBest2pay extends Controller {
                     $elementPrice = $elementPrice * 100;
                     $fiscalPositions.=$elementPrice.';';
                     $fiscalPositions.=$TAX.';';
-                    $fiscalPositions.=$product['name'].'|';
+                    $fiscalPositions.=str_ireplace(['&quot;', '|'], '', $product['name']).'|';
+
+                    $fiscalAmount += $product['quantity'] * $elementPrice;
                 }
                 if ($this->session->data['shipping_method']['cost'] > 0) {
                     $fiscalPositions.='1;';
                     $fiscalPositions.=($this->session->data['shipping_method']['cost']*100).';';
                     $fiscalPositions.=$TAX.';';
                     //$fiscalPositions.='shipping'.'|';
-                    //$fiscalPositions.='Доставка'.'|';
-                    $fiscalPositions.=$this->session->data['shipping_method']['title'].'|';
+                    // $fiscalPositions.=$this->session->data['shipping_method']['title'].'|';
+                    $fiscalPositions.='Доставка'.'|';
+
+                    $fiscalAmount += $this->session->data['shipping_method']['cost']*100;
+                }
+                $amountDiff = abs($fiscalAmount - ($amount * 100));
+                if ($amountDiff) {
+                    $fiscalPositions.='1;'.$amountDiff.';6;coupon;14|';
                 }
                 $fiscalPositions = substr($fiscalPositions, 0, -1);
             }
         }
-		
+        
         $query = http_build_query(array(
             'sector' => $this->config->get('payment_best2pay_sector'),
             'reference' => $order_info['order_id'],
-            'fiscal_positions' => $fiscalPositions,
+            'fiscal_positions' => urlencode($fiscalPositions),
             'amount' => intval($amount * 100),
             'description' => $desc,
             'email' => $order_info['email'],
@@ -148,11 +157,33 @@ class ControllerExtensionPaymentBest2pay extends Controller {
         $b2p_order_id_original = $this->session->data['$b2p_order_id_original'];
         if (!isset($b2p_order_id)){
                 $b2p_order_id = file_get_contents($best2pay_url . '/webapi/Register', false, $context);
+                if (!intval($b2p_order_id)) {
+                    if( $curl = curl_init() ) {
+                        curl_setopt($curl, CURLOPT_URL, $best2pay_url . '/webapi/Register');
+                        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+                        curl_setopt($curl, CURLOPT_POST, true);
+                        curl_setopt($curl, CURLOPT_POSTFIELDS, '&sector=' . $this->config->get('payment_best2pay_sector') . '&reference=' . $order_info['order_id'] . '&fiscal_positions=' . urlencode($fiscalPositions) . '&amount=' .
+                            intval($amount * 100) . '&description=' . urlencode($desc) . '&email=' . $order_info['email'] . '&currency=' . $currency . '&mode=' . '1' . '&signature=' . $signature . '&url=' . 'index.php?route=extension/payment/best2pay/request');
+                        $b2p_order_id = curl_exec($curl);
+                        curl_close($curl);
+                    }
+                }
                 $order_info['b2p_order_id']=$b2p_order_id;
                 $this->session->data['$b2p_order_id']=$b2p_order_id;
                 $this->session->data['$b2p_order_id_original']=$order_info['order_id'];
         } else if ($b2p_order_id_original!=$order_info['order_id']){
             $b2p_order_id = file_get_contents($best2pay_url . '/webapi/Register', false, $context);
+            if (!intval($b2p_order_id)) {
+                if( $curl = curl_init() ) {
+                    curl_setopt($curl, CURLOPT_URL, $best2pay_url . '/webapi/Register');
+                    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($curl, CURLOPT_POST, true);
+                    curl_setopt($curl, CURLOPT_POSTFIELDS, '&sector=' . $this->config->get('payment_best2pay_sector') . '&reference=' . $order_info['order_id'] . '&fiscal_positions=' . urlencode($fiscalPositions) . '&amount=' .
+                        intval($amount * 100) . '&description=' . urlencode($desc) . '&email=' . $order_info['email'] . '&currency=' . $currency . '&mode=' . '1' . '&signature=' . $signature . '&url=' . 'index.php?route=extension/payment/best2pay/request');
+                    $b2p_order_id = curl_exec($curl);
+                    curl_close($curl);
+                }
+            }
             $order_info['b2p_order_id']=$b2p_order_id;
             $this->session->data['$b2p_order_id']=$b2p_order_id;
             $this->session->data['$b2p_order_id_original']=$order_info['order_id'];
@@ -163,7 +194,6 @@ class ControllerExtensionPaymentBest2pay extends Controller {
         error_reporting($old_lvl);
 
         if (intval($b2p_order_id) == 0) {
-        	// var_dump($b2p_order_id);
             error_log($b2p_order_id);
             return false;
         } else {
