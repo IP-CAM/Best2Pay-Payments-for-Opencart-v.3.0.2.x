@@ -110,7 +110,7 @@ class ControllerExtensionPaymentBest2pay extends Controller {
 
                     $fiscalAmount += $product['quantity'] * $elementPrice;
                 }
-                if ($this->session->data['shipping_method']['cost'] > 0) {
+                if (isset($this->session->data['shipping_method']) && $this->session->data['shipping_method']['cost'] > 0) {
                     $fiscalPositions.='1;';
                     $fiscalPositions.=($this->session->data['shipping_method']['cost']*100).';';
                     $fiscalPositions.=$TAX.';';
@@ -163,7 +163,7 @@ class ControllerExtensionPaymentBest2pay extends Controller {
                         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
                         curl_setopt($curl, CURLOPT_POST, true);
                         curl_setopt($curl, CURLOPT_POSTFIELDS, '&sector=' . $this->config->get('payment_best2pay_sector') . '&reference=' . $order_info['order_id'] . '&fiscal_positions=' . urlencode($fiscalPositions) . '&amount=' .
-                            intval($amount * 100) . '&description=' . urlencode($desc) . '&email=' . $order_info['email'] . '&currency=' . $currency . '&mode=' . '1' . '&signature=' . $signature . '&url=' . 'index.php?route=extension/payment/best2pay/request');
+                            intval($amount * 100) . '&description=' . urlencode($desc) . '&email=' . $order_info['email'] . '&currency=' . $currency . '&mode=' . '1' . '&signature=' . $signature . '&url=' . HTTP_SERVER . 'index.php?route=extension/payment/best2pay/request');
                         $b2p_order_id = curl_exec($curl);
                         curl_close($curl);
                     }
@@ -179,7 +179,7 @@ class ControllerExtensionPaymentBest2pay extends Controller {
                     curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
                     curl_setopt($curl, CURLOPT_POST, true);
                     curl_setopt($curl, CURLOPT_POSTFIELDS, '&sector=' . $this->config->get('payment_best2pay_sector') . '&reference=' . $order_info['order_id'] . '&fiscal_positions=' . urlencode($fiscalPositions) . '&amount=' .
-                        intval($amount * 100) . '&description=' . urlencode($desc) . '&email=' . $order_info['email'] . '&currency=' . $currency . '&mode=' . '1' . '&signature=' . $signature . '&url=' . 'index.php?route=extension/payment/best2pay/request');
+                        intval($amount * 100) . '&description=' . urlencode($desc) . '&email=' . $order_info['email'] . '&currency=' . $currency . '&mode=' . '1' . '&signature=' . $signature . '&url=' . HTTP_SERVER . 'index.php?route=extension/payment/best2pay/request');
                     $b2p_order_id = curl_exec($curl);
                     curl_close($curl);
                 }
