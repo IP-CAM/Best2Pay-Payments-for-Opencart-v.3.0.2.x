@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<modification>
+    <name>b2p_column_in_order_list</name>
+    <code>b2p_column_in_order_list</code>
+    <version>1.0</version>
+    <vqmver>2.X</vqmver>
+    <author>best2pay</author>
+    <file path="admin/model/sale/order.php">
+        <operation error="log">
+            <search position="replace"><![CDATA[$sql = "SELECT o.order_id, CONCAT(o.firstname, ' ', o.lastname) AS customer, (SELECT os.name FROM " . DB_PREFIX . "order_status os WHERE os.order_status_id = o.order_status_id AND os.language_id = '" . (int)$this->config->get('config_language_id') . "') AS order_status, o.shipping_code, o.total, o.currency_code, o.currency_value, o.date_added, o.date_modified FROM `" . DB_PREFIX . "order` o";]]></search>
+            <add><![CDATA[$sql = "SELECT o.order_id, CONCAT(o.firstname, ' ', o.lastname) AS customer, (SELECT os.name FROM " . DB_PREFIX . "order_status os WHERE os.order_status_id = o.order_status_id AND os.language_id = '" . (int)$this->config->get('config_language_id') . "') AS order_status, o.shipping_code, o.total, o.b2p_total, o.currency_code, o.currency_value, o.date_added, o.date_modified FROM `" . DB_PREFIX . "order` o";]]></add>
+        </operation>
+    </file>
+    <file path="admin/controller/sale/order.php">
+        <operation error="log">
+            <search position="replace"><![CDATA['total'         => $this->currency->format($result['total'], $result['currency_code'], $result['currency_value']),]]></search>
+            <add><![CDATA['total'         => $this->currency->format($result['total'], $result['currency_code'], $result['currency_value']),
+				'b2p_total'         => $this->currency->format($result['b2p_total'], $result['currency_code'], $result['currency_value']),]]></add>
+        </operation>
+    </file>
+    <file path="admin/view/template/sale/order_list.twig">
+        <operation>
+            <search position="replace"><![CDATA[<td class="text-right">{% if sort == 'o.total' %} <a href="{{ sort_total }}" class="{{ order|lower }}">{{ column_total }}</a> {% else %} <a href="{{ sort_total }}">{{ column_total }}</a> {% endif %}</td>]]></search>
+            <add><![CDATA[
+                <td class="text-right">{% if sort == 'o.total' %} <a href="{{ sort_total }}" class="{{ order|lower }}">{{ column_total }}</a> {% else %} <a href="{{ sort_total }}">{{ column_total }}</a> {% endif %}</td>
+                <td class="text-right">{% if sort == 'o.b2p_total' %} <span data-toggle="tooltip" title="Денежные средства которые поступили от процессингового центра Best2Pay"><a class="{{ order|lower }}">{{ (column_b2p_total) ? column_b2p_total : 'best2pay' }}</a></span> {% else %} <span data-toggle="tooltip" title="Денежные средства которые поступили от процессингового центра Best2Pay"><a>{{ (column_b2p_total) ? column_b2p_total : 'best2pay' }}</a></span> {% endif %}</td>
+            ]]></add>
+        </operation>
+        <operation>
+            <search position="replace"><![CDATA[<td class="text-right">{{ order.total }}</td>]]></search>
+            <add><![CDATA[
+                <td class="text-right">{{ order.total }}</td>
+                <td class="text-right">{{ order.b2p_total }}</td>
+            ]]></add>
+        </operation>
+    </file>
+
+</modification>
