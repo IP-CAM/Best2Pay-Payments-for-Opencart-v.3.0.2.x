@@ -118,7 +118,7 @@ class ControllerExtensionPaymentBest2pay extends Controller {
                     $elementPrice = $elementPrice * 100;
                     $fiscalPositions.=$elementPrice.';';
                     $fiscalPositions.=$TAX.';';
-                    $fiscalPositions.=str_ireplace(['&quot;', '|'], '', $product['name']).'|';
+                    $fiscalPositions.=str_ireplace([';', '|'], '', $product['name']).'|';
 
                     $fiscalAmount += $product['quantity'] * $elementPrice;
                 }
