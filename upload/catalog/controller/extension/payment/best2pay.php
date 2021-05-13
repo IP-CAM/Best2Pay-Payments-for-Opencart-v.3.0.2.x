@@ -134,7 +134,7 @@ class ControllerExtensionPaymentBest2pay extends Controller {
                 }
                 $amountDiff = abs($fiscalAmount - ($amount * 100));
                 if ($amountDiff) {
-                    $fiscalPositions.='1;'.$amountDiff.';6;coupon;14|';
+                    $fiscalPositions.='1;'.$amountDiff.';6;Скидка;14|';
                 }
                 $fiscalPositions = substr($fiscalPositions, 0, -1);
             }
